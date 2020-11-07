@@ -13,24 +13,12 @@
 <!-- 文章详情 -->
 <div class="container">
     <div class="row">
-    <div class="col-9">
+        <div class="col-9">
+            <!-- 标题及作者 -->
+            <h1 class="mt-4 mb-4">{{ article.title }}</h1>
+            <div class="col-12 alert alert-success">
+                <div>
 
-        <!-- 标题及作者 -->
-        <h1 class="col-12 mt-4 mb-4">{{ article.title }}</h1>
-        <div class="col-12 alert alert-success">
-            <div>
-
-
-    </div>
-
-
-        <div class="col-3 mt-4">
-            <h4><strong>目录</strong></h4>
-            <hr>
-            <div>
-                {{ toc|safe }}
-            </div>
-        </div>
             作者：{{ article.author }}
             {% if user == article.author %}
             · <a href="#" onclick="confirm_safe_delete()">删除文章</a>
@@ -45,20 +33,17 @@
                 <button type="submit">发送</button>
             </form>
             · <a href="{% url "article:article_update" article.id %}">编辑文章</a>
-            </div>
-            <div>
+                        <div>
                 浏览：{{ article.total_views }}
             </div>
 
-        </div>
-        <!-- 文章正文 -->
-        <div class="col-12">
-            <p>{{ article.body|safe }}</p>
-        </div>
+            </div>
 
-            <!--发表评论-->
-             <hr>
-    {% if user.is_authenticated %}
+            </div>
+             <!-- 文章正文 -->
+            <div class="col-12">
+            <p>{{ article.body|safe }}</p>
+                {% if user.is_authenticated %}
         <div>
             <form action="{% url 'comment:post_comment' article.id %}"
                   method="POST">
@@ -83,9 +68,7 @@
         </h5>
         <br>
     {% endif %}
-
-
-    <h4>共有{{ comments.count }}条评论</h4>
+            <h4>共有{{ comments.count }}条评论</h4>
     <div>
         {% for comment in comments %}
         <hr>
@@ -99,9 +82,24 @@
         </p>
         <pre style="font-family: inherit; font-size: 1em;">{{ comment.body }}</pre>
         {% endfor %}
-    </div>
-    </div>
+            </div>
+        </div>
+        </div>
+
+
+            <!--发表评论-->
+    <div class="col-3 mt-4">
+            <h4><strong>目录</strong></h4>
+            <hr>
+            <div>
+                {{ toc|safe }}
+            </div>
+        </div>
+
 </div>
+
+</div>
+
 
     <script>
     // 删除文章的函数
@@ -122,4 +120,4 @@
     }
 </script>
 
-{% endblock content %}
+{% endblock %}
