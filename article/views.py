@@ -11,6 +11,11 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 from comment.models import Comment
 
+#开始使用类视图
+from django.views.generic import ListView,DetailView
+from django.views.generic.edit import CreateView
+
+
 
 def article_list(request):
     search =request.GET.get('search')
@@ -122,3 +127,39 @@ def article_update(request,id):
         article_post_form = ArticlePostForm()
         context = {'article':article,'article_post_form':article_post_form}
         return render(request,'article/update.html',context)
+
+class ContextMixin:
+    def get_context_data(self,**kwargs):
+        context = super().get_context_data(**kwargs)
+        context['order'] = 'total_views'
+        return context
+class ArticleListView(ContextMixin,ListView):
+    #上下文名称
+    context_object_name = 'articles'
+    #查询集
+
+    #模版位置
+    template_name = 'article/list.html'
+    def get_queryset(self):
+        """查询集"""
+        queryset = ArticlePost.objects.filter(title="Python")
+        return queryset
+
+#展示文章
+class ArticleDetailView(DetailView):
+    queryset = ArticlePost.objects.all()
+    context_object_name = 'article'
+    template_name = 'article/detail.html'
+    def get_object(self,**kwargs):
+        """获取展示的对象"""
+        obj = super(ArticleDetailView,self).get_object()
+        obj.total_views += 1
+        obj.save(update_field=['total_views'])
+        return obj
+
+#新建文章
+class ArticleCreateView(CreateView):
+    model = ArticlePost
+    fields = '__all__'
+    template_name = 'article/create_by_class_view.html'
+
