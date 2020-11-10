@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from comment.models import Comment
-
+from comment.forms import CommentForm
 
 #开始使用类视图
 from django.views.generic import ListView,DetailView
@@ -61,8 +61,10 @@ def article_detail(request,id):
         'markdown.extensions.toc',
         ]
     )
+    commet_form = CommentForm()
+
     article.body = md.convert(article.body)
-    context = {'article': article, 'toc': md.toc,'comments':comments}
+    context = {'article': article, 'toc': md.toc,'comments':comments,'commet_form':commet_form}
     return render(request,'article/detail.html',context)
 
 
@@ -90,7 +92,6 @@ def article_create(request):
         context = { 'article_post_form':article_post_form,'columns':columns}
 
 
-        print(context.get('article_post_form'))
 
         return render(request,'article/create.html',context)
 
@@ -133,6 +134,9 @@ def article_update(request,id):
                 article.column = ArticleColumn.objects.get(id=request.POST['column'])
             else:
                 article.column = None
+            if request.FILES.get('avatar'):
+                article.avatar = request.FILES.get('avatar')
+            article.tags.set(*request.POST.get('tags').split(','), clear=True)
             article.title = request.POST["title"]
             article.body = request.POST["body"]
             article.save()
@@ -146,6 +150,7 @@ def article_update(request,id):
             'article': article,
             'article_post_form': article_post_form,
             'columns': columns,
+            'tags':','.join([x for x in article.tags.names()])
         }
 
         return render(request,'article/update.html',context)
@@ -159,7 +164,6 @@ class ArticleListView(ContextMixin,ListView):
     #上下文名称
     context_object_name = 'articles'
     #查询集
-
     #模版位置
     template_name = 'article/list.html'
     def get_queryset(self):
