@@ -3,13 +3,14 @@ from django.contrib.auth.models import User
 # Create your views here.
 from django.http import HttpResponse
 from django.shortcuts import render
-from .models import ArticlePost
+from .models import ArticlePost,ArticleColumn
 import markdown
 from .forms import ArticlePostForm
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from comment.models import Comment
+
 
 #开始使用类视图
 from django.views.generic import ListView,DetailView
@@ -20,24 +21,27 @@ from django.views.generic.edit import CreateView
 def article_list(request):
     search =request.GET.get('search')
     order = request.GET.get('order')
+    column = request.GET.get('column')
+    tag = request.GET.get('tag')
+    article_list = ArticlePost.objects.all()
     #用户搜索逻辑
     if search:
-        if order == 'total_views':
-            # 用 Q对象 进行联合搜索
-            article_list = ArticlePost.objects.filter(
-            Q(title__icontains=search) | Q(body__icontains=search)
-        ).order_by('-total_views')
-        else:
-            article_list = ArticlePost.objects.filter(Q(title__icontains=search) | Q(body__icontains=search))
+        article_list = ArticlePost.objects.filter(
+        Q(title__icontains=search) | Q(body__icontains=search)
+    )
     else:
-        #将search 参数重置为空
         search = ''
-        if order == "total_views":
-            article_list = ArticlePost.objects.all().order_by('-total_views')
-        else:
-            article_list = ArticlePost.objects.all()
+    #栏目查询
+    if column is not None and column.isdigit():
+        article_list = article_list.filter(column=column)
+    #标签查询
+    if tag and tag != 'None':
+        article_list = article_list.filter(tags__name__in=[tag])
+    #查询集排序
+    if order == 'total_views':
+        article_list = article_list.order_by('-total_views')
 
-    paginator = Paginator(article_list,9)
+    paginator = Paginator(article_list,3)
     page = request.GET.get("page")
     articles = paginator.get_page(page)
     context = {'articles':articles,'order':order,'search':search}
@@ -68,18 +72,26 @@ def article_create(request):
 
     if request.method == "POST":
         #将提交的数据赋予到表单实例中
-        article_post_form = ArticlePostForm(data=request.POST)
+        article_post_form = ArticlePostForm(request.POST, request.FILES)
         # 判断提交的数据是否满足模型的要求
         if article_post_form.is_valid():
             new_article = article_post_form.save(commit=False)
             new_article.author = User.objects.get(id=request.user.id)
+            if request.POST['column'] != 'none':
+                new_article.column = ArticleColumn.objects.get(id=request.POST['column'])
             new_article.save()
+            article_post_form.save_m2m()
             return redirect("article:article_list")
         else:
             return HttpResponse("表单数据有误，请重新输入")
     else:
         article_post_form = ArticlePostForm()
-        context = { 'article_post_form':article_post_form}
+        columns  = ArticleColumn.objects.all()
+        context = { 'article_post_form':article_post_form,'columns':columns}
+
+
+        print(context.get('article_post_form'))
+
         return render(request,'article/create.html',context)
 
 
@@ -117,6 +129,10 @@ def article_update(request,id):
     if request.method == "POST":
         article_post_form = ArticlePostForm(data=request.POST)
         if article_post_form.is_valid():
+            if request.POST['column'] != 'none':
+                article.column = ArticleColumn.objects.get(id=request.POST['column'])
+            else:
+                article.column = None
             article.title = request.POST["title"]
             article.body = request.POST["body"]
             article.save()
@@ -125,7 +141,13 @@ def article_update(request,id):
             return HttpResponse("表单数据有误")
     else:
         article_post_form = ArticlePostForm()
-        context = {'article':article,'article_post_form':article_post_form}
+        columns = ArticleColumn.objects.all()
+        context = {
+            'article': article,
+            'article_post_form': article_post_form,
+            'columns': columns,
+        }
+
         return render(request,'article/update.html',context)
 
 class ContextMixin:

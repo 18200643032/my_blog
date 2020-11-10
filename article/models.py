@@ -4,8 +4,10 @@ from django.db import models
 from django.contrib.auth.models import User
 # timezone 用于处理时间相关事务。
 from django.utils import timezone
-
+# Django-taggit
+from taggit.managers import TaggableManager
 from django.urls import reverse
+from PIL import Image
 
 class ArticleColumn(models.Model):
     """
@@ -15,7 +17,6 @@ class ArticleColumn(models.Model):
     title = models.CharField(max_length=100,blank=True)
     #时间
     created = models.DateTimeField(default=timezone.now)
-
     def __str__(self):
         return self.title
 
@@ -32,13 +33,15 @@ class ArticlePost(models.Model):
         on_delete=models.CASCADE,
         related_name='article'
     )
-
+    #文章标签
+    tags = TaggableManager(blank=True)
     # 文章标题。models.CharField 为字符串字段，用于保存较短的字符串，比如标题
     title = models.CharField(max_length=100)
 
     # 文章正文。保存大量文本使用 TextField
     body = models.TextField()
-
+    #文章展示图
+    avatar = models.ImageField(upload_to='article/%Y%m%d/', blank=True)
     # 文章创建时间。参数 default=timezone.now 指定其在创建数据时将默认写入当前的时间
     created = models.DateTimeField(default=timezone.now)
 
@@ -46,6 +49,17 @@ class ArticlePost(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     total_views = models.PositiveIntegerField(default=0)
+    #保存时处理图片
+    def save(self,*args,**kwargs):
+        article = super(ArticlePost,self).save(*args,**kwargs)
+        if self.avatar and not kwargs.get('update_fields'):
+            image = Image.open(self.avatar)
+            (x,y) = image.size
+            new_x = 400
+            new_y = int(new_x * (y/x))
+            resized_image = image.resize((new_x,new_y),Image.ANTIALIAS)
+            resized_image.save(self.avatar.path)
+        return article
     # 内部类 class Meta 用于给 model 定义元数据
     class Meta:
         # ordering 指定模型返回的数据的排列顺序
