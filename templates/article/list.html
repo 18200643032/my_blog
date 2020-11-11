@@ -55,11 +55,11 @@
             {% if article.column %}
                 <a role="button" href="{% url 'article:article_list' %}?column={{ article.column.id }}"
                         class="btn btn-sm mb-2
-                        {% if article.column.title == 'Day'%}
+                        {% if article.column.title == 'Django'%}
                             btn-success
-                        {% elif article.column.title == 'Java' %}
+                        {% elif article.column.title == 'python习题' %}
                             btn-danger
-                        {% elif article.column.title == 'Java' %}
+                        {% elif article.column.title == '爬虫' %}
                             btn-warning
                         {% endif %}">
                 {{ article.column }}
