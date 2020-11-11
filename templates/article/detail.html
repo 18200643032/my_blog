@@ -18,67 +18,74 @@
         <div class="col-9">
             <!-- 标题及作者 -->
             <h1 class="mt-4 mb-4">{{ article.title }}</h1>
-            <div class="col-12 alert alert-success">
+            <div class="alert alert-success">
                 <div>
 
             作者：{{ article.author }}
             {% if user == article.author %}
             · <a href="#" onclick="confirm_safe_delete()">删除文章</a>
-
-            {% endif %}
-            <form
+                <form
                 style="display: none;"
                 id="safe_delete"
                 action="{% url 'article:article_safe_delete' article.id %}"
                 method="POST">
                 {% csrf_token %}
                 <button type="submit">发送</button>
-            </form>
-            · <a href="{% url "article:article_update" article.id %}">编辑文章</a>
-                        <div>
+                </form>
+                · <a href="{% url "article:article_update" article.id %}">编辑文章</a>
+            {% endif %}
+                </div>
+
+
+            <div>
                 浏览：{{ article.total_views }}
             </div>
 
-            </div>
+
 
             </div>
              <!-- 文章正文 -->
             <div class="col-12">
             <p>{{ article.body|safe }}</p>
-                {% if user.is_authenticated %}
-        <div>
-            <form action="{% url 'comment:post_comment' article.id %}"
-                  method="POST">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="body">
-                        <strong>
-                            我也要发言
-                        </strong>
-                    </label>
-                    <div>
-                        {{ commet_form.media }}
-                        {{ commet_form.body }}
+            </div>
+            <hr>
+            {% if user.is_authenticated %}
+             {# 发表评论 #}
+                <div>
+                <form action="{% url 'comment:post_comment' article.id %}"
+                      method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="body">
+                            <strong>
+                                我也要发言
+                            </strong>
+                        </label>
+                        <div>
+                            {{ commet_form.media }}
+                            {{ commet_form.body }}
+                        </div>
                     </div>
-                </div>
-                <!--提交按钮-->
-                <button type="submit" class="btn btn-primary">发送</button>
-            </form>
-        </div>
-        <br>
-    {% else %}
-        <br>
-        <h5 class="row justify-content-center">
-            请<a href="{% url 'userprofile:login' %}">登录</a>后回复
-        </h5>
-        <br>
-    {% endif %}
+                    <!--提交按钮-->
+                    <button type="submit" class="btn btn-primary">发送</button>
+                </form>
+            </div>
+                <br>
+
+            {% else %}
+                <br>
+                <h5 class="row justify-content-center">
+                    请<a href="{% url 'userprofile:login' %}">登录</a>后回复
+                </h5>
+                <br>
+            {% endif %}
+                    {# 显示评论 #}
             {% load mptt_tags %}
             <h4>共有{{ comments.count }}条评论</h4>
             <div class="row">
                 {% recursetree comments %}
                     {% with comment=node %}
-                        <div class="{% if comment.reply_to %} offset-1 col-11 {% else %} col-12 {% endif %}">
+                        <div class="{% if comment.reply_to %} offset-1 col-11 {% else %} col-12 {% endif %}" id="comment_elem_{{ comment.id }}">
                         <hr>
                         <p>
                             <strong style="color: pink">
@@ -91,22 +98,23 @@
                                 </strong>
                             {% endif %}
                         </p>
-                        <div>{{ comment.body|safe }}</div>
-                        <div>
-                            <span style="color: green">
-                                {{ comment.created|date:"Y-m-d H:i" }}
-                            </span>
+                <div>{{ comment.body|safe }}</div>
+                <div>
+                    <span style="color: green">
+                        {{ comment.created|date:"Y-m-d H:i" }}
+                    </span>
+                    <!-- 加载 modal 的按钮 -->
+                    {% if user.is_authenticated %}
+                        <button type="button" class="btn btn-light btn-sm text-muted" onclick="load_modal({{ article.id }},{{ comment.id }})">
+                            回复
+                        </button>
+                    {% else %}
+                        <a class="btn btn-light btn-sm text-muted" href="{% url 'userprofile:login' %}">
+                            回复
+                        </a>
+                    {% endif %}
+                </div>
 
-                            {% if user.is_authenticated %}
-                            <button type="button" class="btn btn-light btn-sm text-muted" onclick="load_modal({{ article.id }},{{ comment.id }})">
-                                回复
-                            </button>
-                            {% else %}
-                            <a class="btn btn-light btn-sm text-muted" href="{% url 'userprofile:login' %}">
-                                回复
-                            </a>
-                            {% endif %}
-                        </div>
                 <!-- Modal -->
                 <div class="modal fade"
                      id="comment_{{ comment.id }}"
@@ -126,6 +134,7 @@
                     </div>
                 </div>
 
+
                 {% if not comment.is_leaf_node %}
                     <div class="children">
                         {{ children }}
@@ -134,30 +143,10 @@
             </div>
             {% endwith %}
      {% endrecursetree %}
-                        </div>
-
-                        </div>
-            </div>
-    <div>
-        {% for comment in comments %}
-        <hr>
-        <p>
-            <strong style="color: pink">
-                {{ comment.user }}
-            </strong> 于
-            <span style="color: green">
-                {{ comment.created|date:"Y-m-d H:i:s" }}
-            </span>时说
-        </p>
-        <div>{{ comment.body|safe }}</div>
-        {% endfor %}
-            </div>
-        </div>
-        </div>
-
-
-            <!--发表评论-->
-    <div class="col-3 mt-4 sidebar" id="sidebar" >
+    </div>
+</div>
+     {# 目录 #}
+        <div class="col-3 mt-4 sidebar" id="sidebar" >
         <div class="sidebar__inner">
             <h4><strong>目录</strong></h4>
             <hr>
@@ -165,9 +154,10 @@
                 {{ toc|safe }}
                 </div>
             </div>
-        </div>
-
+          </div>
+    </div>
 </div>
+
 <style>
     .sidebar{
         will-change: min-height;
@@ -178,7 +168,7 @@
     }
 </style>
 
-</div>
+
 
 
     <script>
