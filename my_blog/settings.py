@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'userprofile',
     'comment',
     'taggit',
-    'ckeditor'
+    'ckeditor',
+    'mptt',
+
 ]
 
 MIDDLEWARE = [

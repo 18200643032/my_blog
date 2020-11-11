@@ -44,7 +44,8 @@ def article_list(request):
     paginator = Paginator(article_list,3)
     page = request.GET.get("page")
     articles = paginator.get_page(page)
-    context = {'articles':articles,'order':order,'search':search}
+    context = {'articles':articles,'order':order,'search':search,'column':column,'tag':tag}
+    print(context)
     return render(request,'article/list.html',context)
 
 #文章详情
