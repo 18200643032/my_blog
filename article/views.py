@@ -133,21 +133,24 @@ def article_update(request,id):
     GET方法进入初始表单页面
     id： 文章的 id
     """
+
     article = ArticlePost.objects.get(id=id)
     if request.user != article.author:
         return HttpResponse("抱歉，你无权修改这篇文章")
     if request.method == "POST":
         article_post_form = ArticlePostForm(data=request.POST)
+
         if article_post_form.is_valid():
+            article.title = request.POST['title']
+            article.body = request.POST['body']
             if request.POST['column'] != 'none':
                 article.column = ArticleColumn.objects.get(id=request.POST['column'])
             else:
                 article.column = None
+
             if request.FILES.get('avatar'):
                 article.avatar = request.FILES.get('avatar')
             article.tags.set(*request.POST.get('tags').split(','), clear=True)
-            article.title = request.POST["title"]
-            article.body = request.POST["body"]
             article.save()
             return redirect("article:article_detail",id=id)
         else:

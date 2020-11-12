@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     'taggit',
     'ckeditor',
     'mptt',
+    'notifications',  #发送通知的包
+    'notice',
+
+
 
 ]
 
