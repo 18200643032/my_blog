@@ -217,10 +217,19 @@
                 comment_id +
                 '"></iframe>';
             $(modal_body).append(content);
-        };
+        }
 
         $(modal_id).modal('show');
     }
     </script>
+    <script>
+        function post_reply_add_show_it(new_comment_id) {
+            let next_url = "{% url 'article:article_detail' article.id %}";
+            next_url = next_url.charAt(next_url.length - 1) == '/' ? next_url.slice(0, -1) : next_url;
+            window.location.replace(next_url + "#comment_elem_" + new_comment_id);
+
+        }
+    </script>
+
 {% endblock script %}
 {% endblock %}
